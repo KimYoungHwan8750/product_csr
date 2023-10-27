@@ -32,7 +32,7 @@ let ajax ={
     //get
     get: async (url)=>{
         try{
-            let $fetch = await fetch(url);
+            let $fetch = await fetch(url,options("get"));
             let result = await $fetch.json();
             return result;
         } catch (e){
