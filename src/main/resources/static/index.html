@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <link rel="stylesheet" href="css/index.css">
+</head>
+<script type="module">
+    import {ajax} from "./js/index.js";
+
+
+
+
+
+    /* View ============================== */
+    let $body = document.querySelector("body");
+    $body.innerHTML = `
+    <section class="menu">
+    <div class="menuBtn menuBtn1" >등록</div>
+    <div class="menuBtn menuBtn2" >조회</div>
+</section>
+    <div class="functionView"></div>
+
+    `;
+
+
+    // 1.저장
+    // 2.조회
+    // 3.삭제
+
+    //Insert View
+    let $menuBtn1 = document.querySelector('.menuBtn1');
+    let $menuBtn2 = document.querySelector('.menuBtn2');
+    $menuBtn1.onclick = ()=>{
+        insertPage();
+    }
+    $menuBtn2.onclick = ()=>{
+        searchPage();
+    }
+    function insertPage(){
+
+        let $functionView = document.querySelector(".functionView");
+
+        $functionView.innerHTML =
+            `<div class="functionTitle title">기능 뷰</div>
+            <form class="InsertProduct">
+            <table class="table-fill insertTable tableForm">
+                <tr>
+                    <th scope="col">
+                    상품명
+                    </th>
+                    <th scope="col">
+                    상품수량
+                    </th>
+                    <th scope="col">
+                    상품가격
+                    </th>
+                </tr>
+
+                <tr>
+                <td><input type="text" name="pname"></td>
+                <td><input type="text" name="quantity"></td>
+                <td><input type="text" name="price"></td>
+
+                </tr>
+
+            </table>
+            <button class="sendBtn button" type="button" >상품 저장</button>
+        </form>
+    <div class="statementsTitle">메세지</div>
+`;
+        //$statementsTitle : APIResponse에서 받아온 코드를 실행하는 부분
+        let $statementsTitle = document.querySelector(".statementsTitle");
+
+
+        document.querySelector(".sendBtn").onclick = ()=>{
+            let pname = document.querySelector('input[name="pname"]');
+            let quantity = document.querySelector('input[name="quantity"]');
+            let price = document.querySelector('input[name="price"]');
+
+            let productForm = new FormData();
+            productForm.append("pid",null);
+            productForm.append("pname",pname.value);
+            productForm.append("quantity",quantity.value);
+            productForm.append("price",price.value);
+           async function send(){
+                try {
+                    let ajaxResult = await ajax.put("/product", productForm,true);
+                    if(ajaxResult['status']==='success'){
+                        eval(ajaxResult['successCode'])
+                    } else {
+                        eval(ajaxResult['failCode']);
+                    }
+
+                }catch (err) {
+                    console.error(err);
+                }
+            }
+            send();
+        }
+
+    }
+    function searchPage() {
+        let $functionView = document.querySelector(".functionView");
+        let $functionViewinit = `<div class="functionTitle title">기능 뷰</div>
+            <div class="searchGuide">
+            <div>
+            <label for="pname">상품 이름 : </label>
+             <input id="pname" type="text" name="pname">
+             <button class="searchBtn">조회</button>
+             <button class="searchAllBtn">전체 조회</button>
+             </div>
+             <div class="guideText">상품 이름을 입력해주세요. <br><span style="color:red;">PID항목을 누르면 삭제를 진행, 내용을 변경하면 수정사항이 저장됩니다.</span></div>
+             </div>
+        <form class="InsertProduct">
+            <table class="table-fill insertTable">
+                <tr>
+                    <th scope="col">
+                    상품번호
+                    </th>
+                    <th scope="col">
+                    상품명
+                    </th>
+                    <th scope="col">
+                    상품수량
+                    </th>
+                    <th scope="col">
+                    상품가격
+                    </th>
+                    <th scope="col">
+                    상태
+                    </th>
+                </tr>
+
+            </table>
+            <button class="updateBtn button" type="button" >변경사항 저장</button>
+
+        </form>
+    <div class="statementsTitle">메세지</div>
+`;
+        $functionView.innerHTML = $functionViewinit;
+
+        let $statementsTitle = document.querySelector(".statementsTitle");
+        let $searchBtn = document.querySelector(".searchBtn");
+        let $insertTable = document.querySelector(".insertTable");
+        let $searchAllBtn = document.querySelector(".searchAllBtn")
+
+
+        let Search = async (isTrue)=>{
+            let $pname = document.getElementById("pname");
+                $insertTable.innerHTML=`            <table class="table-fill insertTable">
+                <tr>
+                    <th scope="col">
+                    상품번호
+                    </th>
+                    <th scope="col">
+                    상품명
+                    </th>
+                    <th scope="col">
+                    상품수량
+                    </th>
+                    <th scope="col">
+                    상품가격
+                    </th>
+                    <th scope="col">
+                    상태
+                    </th>
+                </tr>
+
+            </table>`;
+                try {
+                    let ajaxResult;
+                    if(!isTrue) {
+                        ajaxResult = await ajax.get(`/product/${$pname.value}`);
+                    }else{
+                        ajaxResult = await ajax.get(`/product`);
+
+                    }
+                    if(ajaxResult['status']==='success'){
+                        eval(ajaxResult['successCode'])
+                        ajaxResult['body'].forEach(e=>{
+                            let $insertTable = document.querySelector(".insertTable");
+                            let insertAjaxResult = document.createElement('tr');
+                            insertAjaxResult.innerHTML =
+                                `<td><input readonly name="pid" value="${e.pid}"></td>
+                        <td><input class="canWrite"  name="pname" value="${e.pname}" type="text"></td>
+                        <td><input class="canWrite"  name="quantity" value="${e.quantity}" type="text"></td>
+                        <td><input class="canWrite"  name="price" value="${e.price}" type="text"></td>
+                        <td><input class="formResult" readonly></td>`;
+                            $insertTable.appendChild(insertAjaxResult);
+                        })
+
+                    } else {
+                        eval(ajaxResult['failCode']);
+                    }
+                } catch (e){
+                    console.error(e);
+                }
+
+                let $selectByPid = document.querySelectorAll('input[name="pid"]');
+                let $deleteMsg = document.querySelectorAll('.willDelete')
+                $selectByPid.forEach(e=>{
+                    e.addEventListener('click',(pid)=>{
+
+                        if(pid.target.parentElement.parentElement.children[0].firstChild.classList.contains("willDelete")){
+                            pid.target.parentElement.parentElement.children[4].firstChild.value = "";
+
+                            for (let i = 1; i < 4; i++) {
+                                if(pid.target.parentElement.parentElement.children[i].firstChild.value!==pid.target.parentElement.parentElement.children[i].firstChild.getAttribute('value')){
+                                    pid.target.parentElement.parentElement.children[4].firstChild.value = "수정됨";
+                                }
+
+                            }
+
+                        } else {
+                            pid.target.parentElement.parentElement.children[4].firstChild.value = "삭제";
+                        }
+                        for (let i = 0; i < 4; i++) {
+                            if(pid.target.parentElement.parentElement.children[i].firstChild.classList.contains('willDelete')){
+                                pid.target.parentElement.parentElement.children[i].firstChild.classList.remove('willDelete');
+                            } else {
+                                pid.target.parentElement.parentElement.children[i].firstChild.classList.add('willDelete');
+
+                            }
+
+                        }
+
+                    })
+                })
+
+                let $canWrite = document.querySelectorAll(".canWrite");
+
+                $canWrite.forEach(e=>{
+
+                    e.addEventListener('focusout',(evt)=>{
+                        let bfValue = [];
+                        let afValue = []
+                        for (let i = 1; i < 4; i++) {
+                            afValue.push(evt.target.parentElement.parentElement.children[i].firstChild.value);
+                            bfValue.push(evt.target.parentElement.parentElement.children[i].firstChild.getAttribute('value'))
+
+                        }
+
+                        if(!(bfValue.every(e=>afValue.includes(e))&&afValue.every(e=>bfValue.includes(e)))){
+                            for (let i = 0; i < 4; i++) {
+                                evt.target.parentElement.parentElement.children[i].firstChild.classList.remove("willDelete");
+
+                            }
+                            evt.target.parentElement.parentElement.children[4].firstChild.value = "수정됨";
+                        } else {
+                            if(evt.target.parentElement.parentElement.children[0].firstChild.classList.contains("willDelete")){
+                                evt.target.parentElement.parentElement.children[4].firstChild.value = "삭제";
+
+                            } else {
+                                evt.target.parentElement.parentElement.children[4].firstChild.value = "";
+                            }
+
+
+                        }
+                    })
+
+                })
+
+                let $updateBtn = document.querySelector('.updateBtn');
+
+                let afterUpdate=async ()=>{
+
+                    let deleteByPid = [];
+                    //삭제 for each
+                    document.querySelectorAll('.formResult').forEach(e=> {
+                            if (e.parentElement.parentElement.children[4].firstChild.value === "삭제") {
+
+                                let deletePid=e.parentElement.parentElement.children[0].firstChild.value;
+
+                                deleteByPid.push(deletePid);
+
+                            }
+                        }
+                    )
+                    console.log("삭제할 항목 :");
+                    console.log(deleteByPid);
+
+                    // ---> 삭제 for each 끝
+                    let ajaxResult = await ajax.delete("/product",deleteByPid);
+                    //Delete응답에 대한 처리
+                    if(ajaxResult['status']==='success'){
+                        eval(ajaxResult['successCode']);
+                        //Delete성공시 업데이트 진행
+                        let updateByPid = [];
+                        let productDTO = {};
+                        document.querySelectorAll('.formResult').forEach(e=>
+                        {
+                            if(e.parentElement.parentElement.children[4].firstChild.value==='수정됨'){
+                                productDTO = {
+                                    "pid":e.parentElement.parentElement.children[0].firstChild.value,
+                                    "pname":e.parentElement.parentElement.children[1].firstChild.value,
+                                    "quantity":e.parentElement.parentElement.children[2].firstChild.value,
+                                    "price":e.parentElement.parentElement.children[3].firstChild.value
+                                }
+
+                                updateByPid.push(productDTO);
+                            }
+                        })
+                        console.log("수정할 항목:")
+                        console.log(updateByPid);
+                        let ajaxResultt = await ajax.patch("/product",updateByPid);
+                        if(ajaxResultt['status']==='success'){
+                            eval(ajaxResultt['successCode'].replaceAll('ajaxResult','ajaxResultt'));
+                            if(!isTrue){
+                                Search();
+                            } else {
+                                Search(true);
+                            }
+
+                        } else {
+                            eval(ajaxResultt['failCode'].replaceAll('ajaxResult','ajaxResultt'));
+                            if(!isTrue){
+                                Search();
+                            } else {
+                                Search(true);
+                            }
+                        }
+
+
+                    } else {
+                        eval(ajaxResult['failCode']);
+                    }
+
+                    //수정 for each
+
+
+                    // let ajaxResult = await ajax.patch("/product",updatePid);
+                    // console.log(ajaxResult);
+
+                } // ---> 수정 for each 끝
+            $updateBtn.onclick = ()=>{afterUpdate()};
+
+            }
+
+
+
+        $searchBtn.onclick = ()=>{Search()};
+        $searchAllBtn.onclick = ()=>{Search(true)};
+
+
+    }
+
+
+
+
+
+
+
+</script>
+<body>
+
+
+</body>
+</html>
